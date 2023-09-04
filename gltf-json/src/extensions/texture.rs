@@ -9,7 +9,11 @@ pub struct Sampler {}
 
 /// A texture and its sampler.
 #[derive(Clone, Debug, Default, Deserialize, Serialize, Validate)]
-pub struct Texture {}
+pub struct Texture {
+    #[cfg(feature = "KHR_texture_basisu")]
+    #[serde(default, skip_serializing_if = "Option::is_none")]
+    pub khr_texture_basisu : Option<khr_texture_basisu::KhrTextureBasisu>,
+}
 
 #[derive(Clone, Debug, Default, Deserialize, Serialize, Validate)]
 /// Reference to a `Texture`.
@@ -99,3 +103,17 @@ impl Default for TextureTransformScale {
 
 #[cfg(feature = "KHR_texture_transform")]
 impl Validate for TextureTransformScale {}
+
+#[cfg(feature = "KHR_texture_basisu")]
+pub mod khr_texture_basisu{
+    use serde_derive::{Serialize, Deserialize};
+    use gltf_derive::Validate;
+    use crate::image::Image;
+    use crate::Index;
+
+    #[derive(Clone, Debug, Default, Deserialize, Serialize, Validate)]
+    #[serde(default, rename_all = "camelCase")]
+    pub struct KhrTextureBasisu{
+        pub source: Option<Index<Image>>,
+    }
+}
