@@ -141,14 +141,17 @@ impl<'a> Texture<'a> {
 
     /// Returns the image used by this texture.
     pub fn source(&self) -> Option<image::Image<'a>> {
-        self.json.source.map(|source| self.document.images().nth(source.value()).unwrap())
+        self.json
+            .source
+            .map(|source| self.document.images().nth(source.value()).unwrap())
     }
 
     /// Returns the image used by this texture when it is using the KHR_texture_basisu extension
     /// The image refered should be a image of type image/ktx2
     #[cfg(feature = "KHR_texture_basisu")]
-    pub fn source_basisu(&self) -> Option<image::Image<'a>>{
-        self.json.extensions
+    pub fn source_basisu(&self) -> Option<image::Image<'a>> {
+        self.json
+            .extensions
             .as_ref()
             .and_then(|extensions| extensions.khr_texture_basisu.as_ref())
             .and_then(|khr_texture_basisu| khr_texture_basisu.source)

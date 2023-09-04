@@ -12,7 +12,7 @@ pub struct Sampler {}
 pub struct Texture {
     #[cfg(feature = "KHR_texture_basisu")]
     #[serde(default, skip_serializing_if = "Option::is_none")]
-    pub khr_texture_basisu : Option<khr_texture_basisu::KhrTextureBasisu>,
+    pub khr_texture_basisu: Option<khr_texture_basisu::KhrTextureBasisu>,
 }
 
 #[derive(Clone, Debug, Default, Deserialize, Serialize, Validate)]
@@ -105,15 +105,15 @@ impl Default for TextureTransformScale {
 impl Validate for TextureTransformScale {}
 
 #[cfg(feature = "KHR_texture_basisu")]
-pub mod khr_texture_basisu{
-    use serde_derive::{Serialize, Deserialize};
-    use gltf_derive::Validate;
+pub mod khr_texture_basisu {
     use crate::image::Image;
     use crate::Index;
+    use gltf_derive::Validate;
+    use serde_derive::{Deserialize, Serialize};
 
     #[derive(Clone, Debug, Default, Deserialize, Serialize, Validate)]
     #[serde(default, rename_all = "camelCase")]
-    pub struct KhrTextureBasisu{
+    pub struct KhrTextureBasisu {
         pub source: Option<Index<Image>>,
     }
 }
