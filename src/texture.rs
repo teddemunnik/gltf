@@ -150,8 +150,8 @@ impl<'a> Texture<'a> {
     pub fn source_basisu(&self) -> Option<image::Image<'a>>{
         self.json.extensions
             .as_ref()
-            .map(|extensions| extensions.khr_texture_basisu.as_ref()).flatten()
-            .map(|khr_texture_basisu| khr_texture_basisu.source).flatten()
+            .and_then(|extensions| extensions.khr_texture_basisu.as_ref())
+            .and_then(|khr_texture_basisu| khr_texture_basisu.source)
             .map(|source| self.document.images().nth(source.value()).unwrap())
     }
 
