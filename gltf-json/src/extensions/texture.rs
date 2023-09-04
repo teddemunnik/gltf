@@ -11,7 +11,7 @@ pub struct Sampler {}
 #[derive(Clone, Debug, Default, Deserialize, Serialize, Validate)]
 pub struct Texture {
     #[cfg(feature = "KHR_texture_basisu")]
-    #[serde(default, skip_serializing_if = "Option::is_none")]
+    #[serde(default, rename = "KHR_texture_basisu", skip_serializing_if = "Option::is_none")]
     pub khr_texture_basisu: Option<khr_texture_basisu::KhrTextureBasisu>,
 }
 
