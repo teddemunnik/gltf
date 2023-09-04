@@ -140,11 +140,8 @@ impl<'a> Texture<'a> {
     }
 
     /// Returns the image used by this texture.
-    pub fn source(&self) -> image::Image<'a> {
-        self.document
-            .images()
-            .nth(self.json.source.value())
-            .unwrap()
+    pub fn source(&self) -> Option<image::Image<'a>> {
+        self.json.source.map(|source| self.document.images().nth(source.value()).unwrap())
     }
 
     /// Optional application specific data.
