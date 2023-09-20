@@ -305,6 +305,23 @@ where
             .and_then(|accessor| accessor::Iter::new(accessor, self.get_buffer_data.clone()))
     }
 
+    /// TODO
+    pub fn read_positions_direct(&self) -> Option<util::ReadPositionsDirect<'s>> {
+        use self::util::ReadPositionsDirect;
+        use accessor::DataType;
+        self.primitive.get(&Semantic::Positions).and_then(|accessor| {
+            let normalized = accessor.normalized();
+            match accessor.data_type(){
+                DataType::I8 => accessor::Iter::new(accessor, self.get_buffer_data.clone()).map(|x| if normalized { ReadPositionsDirect::NormalizedI8(x) } else { ReadPositionsDirect::I8(x) }),
+                DataType::U8 => accessor::Iter::new(accessor, self.get_buffer_data.clone()).map(|x| if normalized { ReadPositionsDirect::NormalizedU8(x) } else { ReadPositionsDirect::U8(x) }),
+                DataType::I16 => accessor::Iter::new(accessor, self.get_buffer_data.clone()).map(|x| if normalized { ReadPositionsDirect::NormalizedI16(x) } else { ReadPositionsDirect::I16(x) }),
+                DataType::U16 => accessor::Iter::new(accessor, self.get_buffer_data.clone()).map(|x| if normalized { ReadPositionsDirect::NormalizedU16(x) } else { ReadPositionsDirect::U16(x) }),
+                DataType::F32=> accessor::Iter::new(accessor, self.get_buffer_data.clone()).map(ReadPositionsDirect::Float),
+                _ => unreachable!(),
+            }
+        })
+    }
+
     /// Visits the vertex normals of a primitive.
     pub fn read_normals(&self) -> Option<util::ReadNormals<'s>> {
         self.primitive
@@ -312,11 +329,35 @@ where
             .and_then(|accessor| accessor::Iter::new(accessor, self.get_buffer_data.clone()))
     }
 
+    /// TODO
+    pub fn read_normals_direct(&self) -> Option<util::ReadNormalsDirect<'s>>{
+        use self::util::ReadNormalsDirect;
+        use accessor::DataType;
+        self.primitive.get(&Semantic::Normals).and_then(|accessor| match accessor.data_type(){
+            DataType::I8 => accessor::Iter::new(accessor, self.get_buffer_data.clone()).map(ReadNormalsDirect::NormalizedI8),
+            DataType::I16 => accessor::Iter::new(accessor, self.get_buffer_data.clone()).map(ReadNormalsDirect::NormalizedI16),
+            DataType::F32 => accessor::Iter::new(accessor, self.get_buffer_data.clone()).map(ReadNormalsDirect::F32),
+            _ => panic!("Unsupported normal data type")
+        })
+    }
+
     /// Visits the vertex tangents of a primitive.
     pub fn read_tangents(&self) -> Option<util::ReadTangents<'s>> {
         self.primitive
             .get(&Semantic::Tangents)
             .and_then(|accessor| accessor::Iter::new(accessor, self.get_buffer_data.clone()))
+    }
+
+    /// TODO
+    pub fn read_tangents_direct(&self) -> Option<util::ReadTangentsDirect<'s>>{
+        use self::util::ReadTangentsDirect;
+        use accessor::DataType;
+        self.primitive.get(&Semantic::Tangents).and_then(|accessor| match accessor.data_type(){
+            DataType::I8 => accessor::Iter::new(accessor, self.get_buffer_data.clone()).map(ReadTangentsDirect::I8),
+            DataType::I16 => accessor::Iter::new(accessor, self.get_buffer_data.clone()).map(ReadTangentsDirect::I16),
+            DataType::F32 => accessor::Iter::new(accessor, self.get_buffer_data.clone()).map(ReadTangentsDirect::Float),
+            _ => panic!("Unsupported tangent data type"),
+        })
     }
 
     /// Visits the vertex colors of a primitive.
@@ -395,6 +436,25 @@ where
                     .map(ReadTexCoords::F32),
                 _ => unreachable!(),
             })
+    }
+
+    /// TODO
+    pub fn read_tex_coords_extended(&self, set: u32) -> Option<util::ReadTexCoordsExtended<'s>> {
+        use self::util::ReadTexCoordsExtended;
+        use accessor::DataType;
+
+        self.primitive.get(&Semantic::TexCoords(set)).and_then(|accessor| {
+            let normalized = accessor.normalized();
+            match accessor.data_type(){
+                DataType::U8 => accessor::Iter::new(accessor, self.get_buffer_data.clone())
+                    .map(|x| ReadTexCoordsExtended::U8(normalized, x)),
+                DataType::U16 => accessor::Iter::new(accessor, self.get_buffer_data.clone())
+                    .map(|x| ReadTexCoordsExtended::U16(normalized, x)),
+                DataType::F32 => accessor::Iter::new(accessor, self.get_buffer_data.clone())
+                    .map(ReadTexCoordsExtended::F32),
+                _ => panic!("Unsupported data type"),
+            }
+        })
     }
 
     /// Visits the joint weights of the primitive.

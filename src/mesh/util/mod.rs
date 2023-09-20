@@ -21,12 +21,157 @@ use crate::Buffer;
 /// XYZ vertex positions of type `[f32; 3]`.
 pub type ReadPositions<'a> = Iter<'a, [f32; 3]>;
 
+/// Directly reads positions which may have possibly been stored in a quantized format, without performing internal conversions to floating point.
+#[non_exhaustive]
+#[derive(Clone, Debug)]
+pub enum ReadPositionsDirect<'a>{
+    /// XYX vertex position stored as floating point 
+    Float(Iter<'a, [f32; 3]>),
+
+    /// XYZ vertex possitions stored as signed bytes. Should possibly be treated as normalized [-1..1] values.
+    I8(Iter<'a, [i8; 3]>),
+
+    /// XYZ vertex possitions stored as signed bytes. Should possibly be treated as normalized [-1..1] values.
+    NormalizedI8(Iter<'a, [i8; 3]>),
+
+    /// TODO
+    U8(Iter<'a, [u8; 3]>),
+
+    /// TODO
+    NormalizedU8(Iter<'a, [u8; 3]>),
+
+    /// XYZ vertex possitions stored as signed shorts. Should possibly be treated as normalized [-1..1] values.
+    I16(Iter<'a, [i16; 3]>),
+
+    /// XYZ vertex possitions stored as signed shorts. Should possibly be treated as normalized [0..1] values.
+    NormalizedI16(Iter<'a, [i16; 3]>),
+
+    /// TODO
+    U16(Iter<'a, [u16; 3]>),
+
+    /// TODO
+    NormalizedU16(Iter<'a, [u16; 3]>)
+}
+
 /// XYZ vertex normals of type `[f32; 3]`.
 pub type ReadNormals<'a> = Iter<'a, [f32; 3]>;
+
+/// Directly reads normals which may have possibly been stored in a quantized format, without performing internal conversions to floating point.
+#[non_exhaustive]
+pub enum ReadNormalsDirect<'a>{
+
+    /// XYZ vertex normal stored as bytes. Should be treated as normalized [-1..1] values.
+    NormalizedI8(Iter<'a, [i8; 3]>),
+
+    /// XYZ vertex normal stored as shorts. Should be treated as normalized [-1..1] values.
+    NormalizedI16(Iter<'a, [i16; 3]>),
+
+    /// XYZ vertex normal stored as normalized floating point
+    F32(Iter<'a, [f32; 3]>),
+}
+
+/// TODO
+pub struct NormalsAsF32<'a>{
+    iter: ReadNormalsDirect<'a>
+}
+
+fn normalized_i16_to_float(x: [i16; 3]) -> [f32; 3]{
+    [
+        ((x[0] as f32) / 32767.0).max(-1.0),
+        ((x[1] as f32) / 32767.0).max(-1.0),
+        ((x[2] as f32) / 32767.0).max(-1.0)
+    ]
+}
+
+fn normalized_i8_to_float(x: [i8; 3]) -> [f32; 3]{
+    [
+        ((x[0] as f32) / 127.0).max(-1.0),
+        ((x[1] as f32) / 127.0).max(-1.0),
+        ((x[2] as f32) / 127.0).max(-1.0)
+    ]
+}
+
+fn normalized_u16_to_float(x: [u16; 3]) -> [f32; 3]{
+    [
+        x[0] as f32 / 65535.0,
+        x[1] as f32 / 65535.0,
+        x[2] as f32 / 65535.0,
+    ]
+}
+
+fn normalized_u8_to_float(x: [u8; 3]) -> [f32; 3]{
+    [
+        x[0] as f32 / 255.0,
+        x[1] as f32 / 255.0,
+        x[2] as f32 / 255.0
+    ]
+}
+
+impl<'a> Iterator for NormalsAsF32<'a>{
+    type Item = [f32; 3];
+
+    fn next(&mut self) -> Option<Self::Item> {
+        match self.iter{
+            ReadNormalsDirect::F32(ref mut iter) => iter.next(),
+            ReadNormalsDirect::NormalizedI16(ref mut iter) => iter.next().map(normalized_i16_to_float),
+            ReadNormalsDirect::NormalizedI8(ref mut iter) => iter.next().map(normalized_i8_to_float),
+        }
+    }
+}
+
+
+/// TODO
+pub struct PositionsAsF32<'a>{
+    iter: ReadPositionsDirect<'a>
+}
+
+impl<'a> Iterator for PositionsAsF32<'a>{
+    type Item = [f32; 3];
+
+    fn next(&mut self) -> Option<Self::Item>{
+        match self.iter{
+            ReadPositionsDirect::Float(ref mut iter) => iter.next(),
+            ReadPositionsDirect::I8(ref mut iter) => iter.next().map(|x| [x[0] as f32, x[1] as f32, x[2] as f32]),
+            ReadPositionsDirect::NormalizedI8(ref mut iter) => iter.next().map(normalized_i8_to_float),
+            ReadPositionsDirect::U8(ref mut iter) => iter.next().map(|x| [x[0] as f32, x[1] as f32, x[2] as f32]),
+            ReadPositionsDirect::NormalizedU8(ref mut iter) => iter.next().map(normalized_u8_to_float),
+            ReadPositionsDirect::I16(ref mut iter) => iter.next().map(|x| [x[0] as f32, x[1] as f32, x[2] as f32]),
+            ReadPositionsDirect::NormalizedI16(ref mut iter) => iter.next().map(normalized_i16_to_float),
+            ReadPositionsDirect::U16(ref mut iter) => iter.next().map(|x| [x[0] as f32, x[1] as f32, x[2] as f32]),
+            ReadPositionsDirect::NormalizedU16(ref mut iter) => iter.next().map(normalized_u16_to_float),
+        }
+    }
+}
+
+impl<'a> ReadNormalsDirect<'a>{
+    /// TODO
+    pub fn as_floats(self) -> NormalsAsF32<'a>{
+        NormalsAsF32 { iter: self }
+    }
+}
+
+impl<'a> ReadPositionsDirect<'a>{
+    /// TODO
+    pub fn as_floats(self) -> PositionsAsF32<'a>{
+        PositionsAsF32{ iter: self }
+    }
+}
 
 /// XYZW vertex tangents of type `[f32; 4]` where the `w` component is a
 /// sign value (-1 or +1) indicating the handedness of the tangent basis.
 pub type ReadTangents<'a> = Iter<'a, [f32; 4]>;
+
+/// Directly reads normals which may have possibly been stored in a quantized format, without performing internal conversions to floating point.
+pub enum ReadTangentsDirect<'a>{
+    /// XYZ vertex tangent stored as normalized floating point
+    Float(Iter<'a, [f32; 3]>),
+
+    /// XYZ vertex tangent stored as bytes. Should be treated as normalized [-1..1] values.
+    I8(Iter<'a, [i8; 3]>),
+
+    /// XYZ vertex tangent stored as shorts. Should be treated as normalized [-1..1] values.
+    I16(Iter<'a, [i16; 3]>),
+}
 
 /// XYZ vertex position displacements of type `[f32; 3]`.
 pub type ReadPositionDisplacements<'a> = Iter<'a, [f32; 3]>;
@@ -85,6 +230,22 @@ pub enum ReadTexCoords<'a> {
     U8(Iter<'a, [u8; 2]>),
     /// UV texture co-ordinates of type `[u16; 2]>`.
     U16(Iter<'a, [u16; 2]>),
+    /// UV texture co-ordinates of type `[f32; 2]`.
+    F32(Iter<'a, [f32; 2]>),
+}
+
+
+/// TODO
+#[non_exhaustive]
+pub enum ReadTexCoordsExtended<'a>{
+    /// UV texture co-ordinates of type `[i8; 2]>`.
+    I8(bool, Iter<'a, [i8; 2]>),
+    /// UV texture co-ordinates of type `[u8; 2]>`.
+    U8(bool, Iter<'a, [u8; 2]>),
+    /// UV texture co-ordinates of type `[i16; 2]>`.
+    I16(bool, Iter<'a, [i16; 2]>),
+    /// UV texture co-ordinates of type `[u16; 2]>`.
+    U16(bool, Iter<'a, [u16; 2]>),
     /// UV texture co-ordinates of type `[f32; 2]`.
     F32(Iter<'a, [f32; 2]>),
 }
